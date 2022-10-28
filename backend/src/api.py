@@ -61,6 +61,8 @@ def drink_detail(f):
         "drinks": drinksLong
     }), 200
 
+    # Done
+
 
 '''
 @TODO implement endpoint
@@ -82,15 +84,14 @@ def create_drink(f):
     try:
         newDrink = Drink(title=title, recipe=json.dumps(recipe))
         newDrink.insert()
-        drinks = Drink.query.all()
-        drinksLong = [drink.long() for drink in drinks]
         return jsonify({
             'success': True,
-            'drinks': drinksLong
+            'drinks': newDrink.long()
         }), 200
     except:
         abort(422)
 
+    # Done
 
 '''
 @TODO implement endpoint
@@ -103,7 +104,26 @@ def create_drink(f):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks/<int:id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def edit_drink(f, id):
+    drink = Drink.query.filter_by(id=id)
+    if drink is None:
+        abort(404)
+    body = request.get_json()
+    if 'title' not in body and 'recipe' not in body:
+        abort(422)
+    title = body.get('title', None)
+    recipe = body.get('recipe', None)
+    drink.title = title
+    drink.recipe = json.dumps(recipe)
+    drink.update()
+    return jsonify({
+        'success': True,
+        "drinks": drink.long()
+    })
 
+    # Done
 
 '''
 @TODO implement endpoint
@@ -115,7 +135,19 @@ def create_drink(f):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks/<int:id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(f, id):
+    drink = Drink.query.filter_by(id=id)
+    if drink is None:
+        abort(404)
+    drink.delete()
+    return jsonify({
+        "success": True,
+        "drink": id
+    })
+    
+    # Done
 
 # Error Handling
 '''
@@ -147,9 +179,39 @@ def unprocessable(error):
 @TODO implement error handler for 404
     error handler should conform to general task above
 '''
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        'error': 400,
+        "message": "Bad request"
+    }), 400
 
+@app.errorhandler(404)
+def page_not_found(error):
+    return jsonify({
+        "success": False,
+        'error': 404,
+        "message": "Page not found"
+    }), 404
 
+@app.errorhandler(422)
+def unprocessable_recource(error):
+    return jsonify({
+        "success": False,
+        'error': 422,
+        "message": "Unprocessable recource"
+    }), 422
+
+    # Done
 '''
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
+@app.errorhandler(AuthError)
+def auth_error(e):
+    response = jsonify(e.error)
+    response.status_code = e.status_code
+    return response
+
+    # Done
