@@ -37,7 +37,7 @@ def get_drinks():
     return jsonify({
         "success": True,
         "drinks": drinksShort
-    })
+    }), 200
     
     # Done
 
@@ -50,7 +50,8 @@ def get_drinks():
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks-detail', methods=['GET'])
-def drink_detail():
+@requires_auth('get:drinks-detail')
+def drink_detail(payload):
     drinks = Drink.query.all()
     if len(drinks) == 0:
         abort(404)
@@ -58,8 +59,7 @@ def drink_detail():
     return jsonify({
         "success": True,
         "drinks": drinksLong
-    })
-    pass
+    }), 200
 
 
 '''
