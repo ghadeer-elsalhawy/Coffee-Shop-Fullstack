@@ -51,7 +51,7 @@ def get_drinks():
 '''
 @app.route('/drinks-detail', methods=['GET'])
 @requires_auth('get:drinks-detail')
-def drink_detail(payload):
+def drink_detail(f):
     drinks = Drink.query.all()
     if len(drinks) == 0:
         abort(404)
@@ -71,6 +71,25 @@ def drink_detail(payload):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink(f):
+    body = request.get_json()
+    if 'title' not in body or 'recipe' not in body:
+        abort(422)
+    title = body['title']
+    recipe = body['recipe']
+    try:
+        newDrink = Drink(title=title, recipe=json.dumps(recipe))
+        newDrink.insert()
+        drinks = Drink.query.all()
+        drinksLong = [drink.long() for drink in drinks]
+        return jsonify({
+            'success': True,
+            'drinks': drinksLong
+        }), 200
+    except:
+        abort(422)
 
 
 '''
